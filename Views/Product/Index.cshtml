@@ -1,0 +1,246 @@
+@model List<Product>
+<style>
+    .formEdit {
+        display: none;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        position: fixed;
+        top: 0;
+        left: 0;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+    }
+
+    .Edit {
+        width: 50%;
+        background-color: white;
+        border-radius: 20px;
+        padding: 20px;
+        box-sizing: border-box;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .items {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 15px;
+    }
+
+    .items label {
+        margin-bottom: 5px;
+    }
+
+    .items input {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        width: 100%;
+    }
+
+    .items img {
+        max-width: 100%;
+        max-height: 100px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .items button {
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+</style>
+
+@* <h2>Products</h2> *@
+<div class="formEdit" id="modal">
+    <div class="Edit">
+        <div class="items">
+            <p>Ảnh : </p>
+            <img id="Image"/>
+             <input id="images" type="file" onchange="displaySelectedImage()"/>
+        </div>
+        <div class="items">
+            <p>Tên sản phẩm: </p>
+            <input type="text" id="name"/>
+        </div>
+        <div class="items">
+            <p>Mô tả: </p>
+            <input type="text" id="Introduction"/>
+        </div>
+        <div class="items">
+            <p>Price: </p>
+            <input type="text" id="Price"/>
+        </div>
+        <div>
+            <button onclick="closeForm()">Back</button>
+            <button id="updateButton">Update</button>
+        </div>
+    </div>
+</div>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; width: 100%">
+
+   <div class="row row-cols-1 row-cols-md-3 g-4">
+    @foreach (var product in Model)
+    {
+        
+            <div class="col">
+                <div class="card h-100">
+                    <img src="@product.Imageurl" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">@product.Nameproduct</h5>
+                        <p class="card-text">@product.Introduction</p>
+                        <p>
+                           Price: @product.Price
+                        </p>
+                    </div>
+                    <div>
+                        <button onclick="deleteProduct('@product.Idproduct')">Xóa</button>
+                        <button onclick="updateProduct('@product.Idproduct', '@product.Nameproduct', '@product.Imageurl', '@product.Introduction', @product.Price)">Sửa</button>
+                    </div>
+                </div>
+            </div>
+    }
+    </div>
+    <div>
+        <button>Thêm SP</button>
+    </div>
+</div>
+<script>
+// Hàm xử lý sự kiện khi người dùng chọn tệp
+    function displaySelectedImage() {
+        const imageElement = document.getElementById('Image');
+        const fileInput = document.getElementById('images');
+        
+        // Kiểm tra xem đã chọn tệp chưa
+        if (fileInput.files.length > 0) {
+            const selectedImage = fileInput.files[0];
+
+            // Kiểm tra xem tệp đã chọn có phải là ảnh không
+            if (selectedImage.type.startsWith('image/')) {
+                // Đọc tệp và hiển thị trong thẻ <img>
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imageElement.src = e.target.result;
+                    imageElement.style.width = '200px';
+                };
+                reader.readAsDataURL(selectedImage);
+            } else {
+                console.error('Vui lòng chọn một tệp ảnh.');
+            }
+        } else {
+            console.error('Không có tệp nào được chọn.');
+        }
+    }
+
+    const updateProduct = (productId, productName, image, introduction, price) => {
+    document.getElementById("modal").style.display = "block";
+
+    // Thiết lập giá trị trong biểu mẫu modal
+    document.getElementById('name').value = productName;
+
+    // Kiểm tra xem ảnh có giá trị không trước khi cố gắng đặt src
+    const imageElement = document.getElementById('Image');
+
+    if (image) {
+        // Xử lý nếu đường dẫn ảnh là base64
+        if (image.startsWith('data:image')) {
+            // Thiết lập nguồn ảnh trực tiếp từ base64
+            imageElement.src = image;
+            imageElement.style.width = '200px';
+        } else {
+            // Xử lý đường dẫn ảnh thông thường
+            imageElement.src = image;
+            imageElement.style.width = '200px';
+        }
+    } else {
+        // Đặt ảnh mặc định hoặc hiển thị thông báo nếu không có ảnh
+        imageElement.src = 'đường_dẫn_ảnh_mặc_định.jpg';
+        imageElement.style.width = 'auto';
+        console.error('Không có đường dẫn ảnh.');
+    }
+
+    document.getElementById('Introduction').value = introduction;
+
+    // Kiểm tra xem giá có giá trị không trước khi đặt giá
+    const priceElement = document.getElementById('Price');
+    if (!isNaN(price)) {
+        priceElement.value = price;
+    } else {
+        // Đặt giá mặc định hoặc hiển thị thông báo nếu giá không hợp lệ
+        priceElement.value = 'Giá không hợp lệ';
+        console.error('Giá không hợp lệ.');
+    }
+    // Sự kiện cập nhật
+    const updateButton = document.getElementById('updateButton');
+    updateButton.onclick = async () => {
+        try {
+            const response = await fetch(`/Product/UpdateProduct`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    Idproduct: productId,
+                    Nameproduct: document.getElementById('name').value,
+                    Imageurl: imageElement.src,
+                    Introduction: document.getElementById('Introduction').value,
+                    Price: parseFloat(priceElement.value),
+                }),
+            });
+
+            if (response.ok) {
+                // Xử lý khi cập nhật thành công, ví dụ: đóng modal và làm mới danh sách sản phẩm
+                closeForm();
+                location.reload();
+            } else {
+                // Xử lý khi có lỗi
+                console.error('Cập nhật sản phẩm thất bại');
+            }
+        } catch (error) {
+            console.error('Lỗi trong quá trình thực hiện thao tác cập nhật:', error);
+        }
+    };
+    }
+
+
+    async function deleteProduct(Idproduct) {
+        @* console.log(Idproduct) *@
+        if (confirm("Bạn có chắc muốn xóa sản phẩm này không?")) {
+            try {
+                const response = await fetch(`/Product/Delete`, {
+                    method: 'DELETE',
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body:"Idproduct=" + Idproduct
+                });
+
+                if (response.ok) {
+                    // Xử lý khi thành công, ví dụ: xóa sản phẩm đã bị xóa khỏi giao diện người dùng
+                    // Bạn cũng có thể chọn làm mới trang hoặc cập nhật danh sách sản phẩm một cách động
+                    location.reload(); // Ví dụ làm mới trang
+                    @* console.error('Xóa sản phẩm'); *@
+                } else {
+                    // Xử lý khi có lỗi
+                    console.error('Xóa sản phẩm thất bại');
+                }
+            } catch (error) {
+                console.error('Lỗi trong quá trình thực hiện thao tác xóa:', error);
+            }
+        }
+    }
+    const closeForm = () => {
+        document.getElementById("modal").style.display = "none";
+    }
+
+</script>
